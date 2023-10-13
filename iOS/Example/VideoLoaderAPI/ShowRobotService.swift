@@ -7,7 +7,7 @@
 
 import Foundation
 
-let kCurrentUid: UInt = 20001234
+let kCurrentUid: UInt = ShowRobotService.shared.currentUid
 let kRobotUid: UInt = 1024
 private let kRobotRoomStartId = 100
 private let robotStreamURL = [
@@ -25,6 +25,17 @@ private let robotRoomOwnerHeaders = [
 
 class ShowRobotService {
     static let shared: ShowRobotService = ShowRobotService()
+    fileprivate var currentUid: UInt {
+        get {
+            let uidKey = "agora_uid"
+            var uid = UserDefaults.standard.value(forKey: uidKey) as? UInt ?? 0
+            if uid == 0 {
+                uid = UInt(arc4random_uniform(100000000))
+                UserDefaults.standard.setValue(uid, forKey: uidKey)
+            }
+            return uid
+        }
+    }
     private var timer: Timer?
     func startCloudPlayers(count: Int) {
         assert(count > 0)

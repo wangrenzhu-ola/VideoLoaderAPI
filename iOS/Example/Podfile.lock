@@ -1,0 +1,23 @@
+PODS:
+  - AgoraRtcEngine_Special_iOS (4.2.2.135)
+  - VideoLoaderAPI (0.1.0):
+    - AgoraRtcEngine_Special_iOS
+
+DEPENDENCIES:
+  - VideoLoaderAPI (from `../`)
+
+SPEC REPOS:
+  trunk:
+    - AgoraRtcEngine_Special_iOS
+
+EXTERNAL SOURCES:
+  VideoLoaderAPI:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  AgoraRtcEngine_Special_iOS: 44eddb5b9129eff3ab8d691999591d93fe37077d
+  VideoLoaderAPI: d50ad8f8767ddaad5328c4cf64dd9c5d8ee32d3e
+
+PODFILE CHECKSUM: 5e964c233e964745bba50cd10e8e8837c026d70f
+
+COCOAPODS: 1.12.1

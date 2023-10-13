@@ -1,0 +1,13 @@
+use_frameworks!
+
+platform :ios, '10.0'
+
+target 'VideoLoaderAPI_Example' do
+  pod 'VideoLoaderAPI', :path => '../'
+
+  target 'VideoLoaderAPI_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end

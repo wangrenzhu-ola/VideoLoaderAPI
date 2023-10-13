@@ -23,7 +23,7 @@
   
 ## 3.运行示例
 - 克隆或者直接下载项目源码
-- 在项目的[KeyCenter.swift](Example/VideoLoaderAPI/KeyCenter.swift) 中填入声网的AppId、Certificate、CloudPlayerKey、CloudPlayerSecret，如何申请请查看[如何获取声网APPID](###如何获取声网APPID)
+- 在项目的[KeyCenter.swift](Example/VideoLoaderAPI/KeyCenter.swift) 中填入声网的AppId、Certificate、CloudPlayerKey、CloudPlayerSecret，如何申请请查看[如何获取声网APPID](../README.md###如何获取声网APPID)
   
   ```
   static var AppId: String = <#Your AppId#>
@@ -129,7 +129,7 @@
 
 > - 声网APPID申请：[https://www.agora.io/cn/](https://www.agora.io/cn/)
 >
-> - 秒切机器人服务配置CloudPlayerKey、CloudPlayerSecret（CloudPlayer）
+> - 机器人房间推流服务配置CloudPlayerKey、CloudPlayerSecret（CloudPlayer）
   > 
   >   ![xxx](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/show/CloudPlayer.png)
   > 

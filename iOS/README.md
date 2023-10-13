@@ -23,7 +23,7 @@
   
 ## 3.运行示例
 - 克隆或者直接下载项目源码
-- 在项目的[KeyCenter.swift](Example/VideoLoaderAPI/KeyCenter.swift) 中填入声网的AppId、Certificate、CloudPlayerKey、CloudPlayerSecret，如何申请请查看[如何获取声网APPID](../README.md###如何获取声网APPID)
+- 在项目的[KeyCenter.swift](Example/VideoLoaderAPI/KeyCenter.swift) 中填入声网的AppId、Certificate、机器人推流配置(CloudPlayerKey、CloudPlayerSecret)，如何申请请查看[如何获取声网APPID](../README.md###如何获取声网APPID)
   
   ```
   static var AppId: String = <#Your AppId#>

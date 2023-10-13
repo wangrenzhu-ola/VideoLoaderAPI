@@ -24,7 +24,8 @@
 > - 声网APPID申请：[https://www.agora.io/cn/](https://www.agora.io/cn/)
 >
 > - 机器人房间推流服务配置（CloudPlayer）
-![](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/show/CloudPlayer.png)
+> 
+![xxx](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/show/CloudPlayer.png)
 
 ### 集成遇到困难，该如何联系声网获取协助
 

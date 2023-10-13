@@ -49,6 +49,21 @@
   config.rtcEngine = _createRtcEngine()
   api.setup(config: config)
   ```
+- 列表item对象实现IVideoLoaderRoomInfo
+  ```swift
+  class RoomListModel: NSObject, IVideoLoaderRoomInfo {
+    //外部设置当前房间的互动对象，如果有多个表示是pk或连麦，1个表示单主播展示
+    var anchorInfoList: [VideoLoaderAPI.AnchorInfo] = []
+    //房主uid
+    func userId() -> String {
+        return "\(anchorInfoList.first?.uid ?? 0)"
+    }
+    //房间id
+    func channelName() -> String {
+        return anchorInfoList.first?.channelName ?? ""
+    }
+  }
+  ```
 - 秒开设置
     - 创建AGCollectionLoadingDelegateHandler对象绑定对应的collectionView
         ```swift

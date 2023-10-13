@@ -84,7 +84,16 @@
         ```swift
         cell.ag_addPreloadTap(roomInfo: room,
                               localUid: kCurrentUid) { state in
-            //获取到点击的开始、结束，如果需要拦截不继续做秒开操作，可以返回false
+            //获取到点击的开始、结束，如果需要拦截不继续做秒开操作，可以返回false，例如token没有获取成功
+            if token.count == 0 {
+              if state == .began {
+                //开始点击
+              } else if state == .ended {
+                //结束点击
+              }
+              return false
+            }
+            
             return true
         } completion: { [weak self] in
             guard let self = self else {return}
@@ -117,7 +126,17 @@
         //绑定handler
         collectionView.delegate = self.delegateHandler
         ```
+      - 更新房间列表
+        ```swift
+        //更新房间列表
+        self.delegateHandler.roomList = AGRoomArray(roomList: roomList)
 
+        //1.全量刷新房间
+        collectionView.reloadData()
+
+        //2.指定刷新特定房间
+        collectionView.reloadItems(at: indexPaths)
+        ```
       > ⚠️如果需要实现UICollectionViewDelegate的方法，请继承AGCollectionSlicingDelegateHandler自行实现，，但需要保证在重写过父类的方法里调用super.{superMethod}使用来保证秒切可用
 - 离开秒切房间后清理缓存
     ```swift

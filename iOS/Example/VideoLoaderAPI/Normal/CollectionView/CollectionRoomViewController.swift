@@ -30,7 +30,11 @@ class RoomCollectionViewController: UIViewController {
         handler.audioSlicingType = audioType
         handler.onRequireRenderVideo = { [weak self] (info, cell, indexPath) in
             guard let cell = cell as? TestRoomCollectionViewCell else {return nil }
-            return cell.canvasView
+            let roomInfo = self?.roomList?[indexPath.row]
+            if info.channelName != roomInfo?.channelName() {
+                return cell.otherBroadcasterView
+            }
+            return cell.mainBroadcasterView
         }
         return handler
     }()
@@ -82,21 +86,21 @@ class RoomCollectionViewController: UIViewController {
         button.addTarget(self, action: #selector(closeAction), for: .touchUpInside)
         
         
-        let button1 = UIButton(type: .custom)
-        button1.setTitle("refresh", for: .normal)
-        button1.setTitleColor(.white, for: .normal)
-        view.addSubview(button1)
-        button1.backgroundColor = .blue
-        button1.frame = CGRect(x: 10, y: 130, width: 100, height: 40)
-        button1.addTarget(self, action: #selector(refreshAction), for: .touchUpInside)
-        
-        let button2 = UIButton(type: .custom)
-        button2.setTitle("load more", for: .normal)
-        button2.setTitleColor(.white, for: .normal)
-        view.addSubview(button2)
-        button2.backgroundColor = .blue
-        button2.frame = CGRect(x: 10, y: 180, width: 100, height: 40)
-        button2.addTarget(self, action: #selector(reloadAction), for: .touchUpInside)
+//        let button1 = UIButton(type: .custom)
+//        button1.setTitle("refresh", for: .normal)
+//        button1.setTitleColor(.white, for: .normal)
+//        view.addSubview(button1)
+//        button1.backgroundColor = .blue
+//        button1.frame = CGRect(x: 10, y: 130, width: 100, height: 40)
+//        button1.addTarget(self, action: #selector(refreshAction), for: .touchUpInside)
+//        
+//        let button2 = UIButton(type: .custom)
+//        button2.setTitle("load more", for: .normal)
+//        button2.setTitleColor(.white, for: .normal)
+//        view.addSubview(button2)
+//        button2.backgroundColor = .blue
+//        button2.frame = CGRect(x: 10, y: 180, width: 100, height: 40)
+//        button2.addTarget(self, action: #selector(reloadAction), for: .touchUpInside)
         
         view.addSubview(label)
     }
@@ -111,21 +115,21 @@ class RoomCollectionViewController: UIViewController {
         navigationController?.popViewController(animated: false)
     }
     
-    @objc func refreshAction() {
-        self.roomList = origRoomList!
-        listView.reloadData()
-    }
-    
-    @objc func reloadAction() {
-        var appendIdxPath = [IndexPath]()
-        let roomList = origRoomList!
-        let totalCount = delegateHandler.roomList!.count()
-        for (i, _) in roomList.enumerated() {
-            appendIdxPath.append(IndexPath(row: i + totalCount, section: 0))
-        }
-        self.roomList = self.roomList! + roomList
-        listView.insertItems(at: appendIdxPath)
-    }
+//    @objc func refreshAction() {
+//        self.roomList = origRoomList!
+//        listView.reloadData()
+//    }
+//    
+//    @objc func reloadAction() {
+//        var appendIdxPath = [IndexPath]()
+//        let roomList = origRoomList!
+//        let totalCount = delegateHandler.roomList!.count()
+//        for (i, _) in roomList.enumerated() {
+//            appendIdxPath.append(IndexPath(row: i + totalCount, section: 0))
+//        }
+//        self.roomList = self.roomList! + roomList
+//        listView.insertItems(at: appendIdxPath)
+//    }
 }
 
 extension RoomCollectionViewController: UICollectionViewDataSource {
@@ -133,6 +137,7 @@ extension RoomCollectionViewController: UICollectionViewDataSource {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: kUIListViewCellIdentifier, for: indexPath) as! TestRoomCollectionViewCell
         let room = self.roomList![indexPath.row]
         cell.titleLabel.text = "roomId:\(room.channelName())\n index:\(indexPath.row)"
+        cell.broadcasterCount = room.anchorInfoList.count
         return cell
     }
     

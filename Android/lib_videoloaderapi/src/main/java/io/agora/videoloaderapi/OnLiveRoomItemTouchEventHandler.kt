@@ -1,4 +1,4 @@
-package io.agora.scene.show.videoLoaderAPI
+package io.agora.videoloaderapi
 
 import android.annotation.SuppressLint
 import android.content.Context

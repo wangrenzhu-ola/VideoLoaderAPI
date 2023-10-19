@@ -101,6 +101,18 @@ class RoomCollectionListViewController: UIViewController {
                 anchor.channelName = "\(ShowRobotService.robotRoomId(i))"
                 anchor.token = token
                 room.anchorInfoList = [anchor]
+                let pkChannelIdx = Int(arc4random_uniform(24))
+                if pkChannelIdx < 12 {
+                    let channelName = "\(ShowRobotService.robotRoomId(pkChannelIdx))"
+                    if channelName == anchor.channelName {
+                        continue
+                    }
+                    let pkAnchor = AnchorInfo()
+                    pkAnchor.uid = kRobotUid
+                    pkAnchor.channelName = channelName
+                    pkAnchor.token = token
+                    room.anchorInfoList.append(pkAnchor)
+                }
                 list.append(room)
             }
             self.roomList = list

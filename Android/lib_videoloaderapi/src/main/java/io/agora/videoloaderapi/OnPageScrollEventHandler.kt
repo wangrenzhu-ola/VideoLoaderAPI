@@ -1,4 +1,4 @@
-package io.agora.scene.show.videoLoaderAPI
+package io.agora.videoloaderapi
 
 import android.content.Context
 import android.os.Handler
@@ -7,7 +7,6 @@ import android.util.Log
 import android.util.SparseArray
 import androidx.viewpager2.widget.ViewPager2
 import io.agora.rtc2.*
-import io.agora.scene.base.manager.UserManager
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -65,7 +64,7 @@ abstract class OnPageScrollEventHandler constructor(
     fun onRoomCreated(position: Int, info: VideoLoader.RoomInfo, isCurrentItem: Boolean) {
         roomList.put(position, info)
         if (isCurrentItem) {
-            joinChannel(position, info, localUid)
+            joinChannel(position, info, localUid, true)
             info.anchorList.forEach {
                 mRtcEngine.adjustUserPlaybackSignalVolumeEx(it.anchorUid, 100, RtcConnection(it.channelId, localUid))
             }
@@ -73,6 +72,7 @@ abstract class OnPageScrollEventHandler constructor(
                 roomsJoined.add(info)
                 preJoinChannels()
             }, 200)
+            onPageStartLoading(position)
         }
     }
 
@@ -89,7 +89,7 @@ abstract class OnPageScrollEventHandler constructor(
             onRequireRenderVideo(position, newInfo)?.let { canvas ->
                 videoSwitcher.renderVideo(
                     newInfo,
-                    UserManager.getInstance().user.id.toInt(),
+                    localUid,
                     canvas
                 )
             }
@@ -150,12 +150,12 @@ abstract class OnPageScrollEventHandler constructor(
                 if (isMoveUp && positionOffset >= PRE_LOAD_OFFSET && preLoadPosition == POSITION_NONE) {
                     preLoadPosition = currLoadPosition + 1
                     // TODO preLoadPosition 页面开始显示
-                    joinChannel(preLoadPosition, roomList[preLoadPosition] ?: return, localUid)
+                    joinChannel(preLoadPosition, roomList[preLoadPosition] ?: return, localUid, false)
                     onPageStartLoading(preLoadPosition)
                 } else if (!isMoveUp && positionOffset <= (1 - PRE_LOAD_OFFSET) && preLoadPosition == POSITION_NONE) {
                     preLoadPosition = currLoadPosition - 1
                     // TODO preLoadPosition 页面开始显示
-                    joinChannel(preLoadPosition, roomList[preLoadPosition] ?: return, localUid)
+                    joinChannel(preLoadPosition, roomList[preLoadPosition] ?: return, localUid, false)
                     onPageStartLoading(preLoadPosition)
                 }
             }
@@ -190,11 +190,6 @@ abstract class OnPageScrollEventHandler constructor(
                 // TODO currLoadPosition 页面消失
                 hideChannel(roomList[currLoadPosition] ?: return)
                 onPageLeft(currLoadPosition)
-
-                // TODO position 页面开始显示
-                val roomInfo2 = roomList[position] ?: return
-                joinChannel(position, roomInfo2, localUid)
-                onPageStartLoading(position)
             }
         }
         currLoadPosition = position
@@ -212,16 +207,16 @@ abstract class OnPageScrollEventHandler constructor(
     abstract fun onRequireRenderVideo(position: Int, info: VideoLoader.AnchorInfo): VideoLoader.VideoCanvasContainer?
 
     // ------------------------ inner ---------------------------
-    private fun joinChannel(position: Int, roomInfo: VideoLoader.RoomInfo, uid: Int) {
+    private fun joinChannel(position: Int, roomInfo: VideoLoader.RoomInfo, uid: Int, isCurrentItem: Boolean) {
         Log.d(tag, "joinChannel roomInfo=$roomInfo")
 
         roomInfo.anchorList.forEach { anchorInfo ->
             videoSwitcher.switchAnchorState(AnchorState.JOINED, anchorInfo, uid, context)
-            if (videoScrollMode == AGSlicingType.VISIABLE) {
+            if (videoScrollMode == AGSlicingType.VISIABLE || isCurrentItem) {
                 onRequireRenderVideo(position, anchorInfo)?.let {
                     videoSwitcher.renderVideo(
                         anchorInfo,
-                        UserManager.getInstance().user.id.toInt(),
+                        localUid,
                         it
                     )
                 }
@@ -236,8 +231,9 @@ abstract class OnPageScrollEventHandler constructor(
     private fun hideChannel(roomInfo: VideoLoader.RoomInfo) {
         Log.d(tag, "switchRoomState, hideChannel: $roomInfo")
         roomsJoined.removeIf { it.roomId == roomInfo.roomId }
-        if (needPreJoin) {
-            roomInfo.anchorList.forEach {
+        val currentRoom = roomsJoined.firstOrNull() ?: return
+        roomInfo.anchorList.forEach {
+            if (needPreJoin && currentRoom.anchorList.none { joined -> joined.channelId == it.channelId }) {
                 videoSwitcher.switchAnchorState(AnchorState.PRE_JOINED, it, localUid, context)
             }
         }
@@ -315,7 +311,7 @@ abstract class OnPageScrollEventHandler constructor(
                 onRequireRenderVideo(position, anchorInfo)?.let {
                     videoSwitcher.renderVideo(
                         anchorInfo,
-                        UserManager.getInstance().user.id.toInt(),
+                        localUid,
                         it
                     )
                 }

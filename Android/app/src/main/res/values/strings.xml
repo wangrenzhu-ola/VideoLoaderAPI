@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">VideoLoaderAPI</string>
+    <string name="show_room_id">ID: %s</string>
+    <string name="show_welcome">Welcome to VideoLoaderAPI demo!</string>
+    <string name="show_enter_demo">Enter</string>
+    <string name="show_prejoin_mode">needPreJoin</string>
+    <string name="show_slicing_mode">slicingMode</string>
+    <string name="show_settings">settings</string>
+    <string name="show_pk">连线互动</string>
+</resources>

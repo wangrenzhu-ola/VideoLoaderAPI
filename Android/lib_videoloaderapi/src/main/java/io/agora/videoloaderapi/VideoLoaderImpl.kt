@@ -1,4 +1,4 @@
-package io.agora.scene.show.videoLoaderAPI
+package io.agora.videoloaderapi
 
 import android.content.Context
 import android.util.Log
@@ -54,6 +54,7 @@ class VideoLoaderImpl constructor(private val rtcEngine: RtcEngineEx) : VideoLoa
     }
 
     override fun renderVideo(anchorInfo: VideoLoader.AnchorInfo, localUid: Int, container: VideoLoader.VideoCanvasContainer) {
+        Log.d(tag, "renderVideo called: $anchorInfo")
         remoteVideoCanvasList.firstOrNull {
             it.connection.channelId == anchorInfo.channelId && it.uid == container.uid && it.renderMode == container.renderMode && it.lifecycleOwner == container.lifecycleOwner
         }?.let {
@@ -61,7 +62,6 @@ class VideoLoaderImpl constructor(private val rtcEngine: RtcEngineEx) : VideoLoa
             val viewIndex = container.container.indexOfChild(videoView)
 
             if (viewIndex == container.viewIndex) {
-                Log.d("hugo", "setupRemoteVideoEx111")
                 rtcEngine.setupRemoteVideoEx(
                     it,
                     it.connection
@@ -73,11 +73,9 @@ class VideoLoaderImpl constructor(private val rtcEngine: RtcEngineEx) : VideoLoa
 
         var videoView = container.container.getChildAt(container.viewIndex)
         if (videoView !is TextureView) {
-            Log.d("hugo", "setupRemoteVideoEx2221")
             videoView = TextureView(container.container.context)
             container.container.addView(videoView, container.viewIndex)
         } else {
-            Log.d("hugo", "setupRemoteVideoEx2222")
             container.container.removeViewInLayout(videoView)
             videoView = TextureView(container.container.context)
             container.container.addView(videoView, container.viewIndex)
@@ -94,7 +92,6 @@ class VideoLoaderImpl constructor(private val rtcEngine: RtcEngineEx) : VideoLoa
                     container.renderMode,
                     container.uid
                 )
-                Log.d("hugo", "setupRemoteVideoEx222")
                 rtcEngine.setupRemoteVideoEx(
                     remoteVideoCanvasWrap,
                     connectionWrap
@@ -110,7 +107,6 @@ class VideoLoaderImpl constructor(private val rtcEngine: RtcEngineEx) : VideoLoa
             container.renderMode,
             container.uid
         )
-        Log.d("hugo", "setupRemoteVideoEx333")
         rtcEngine.setupRemoteVideoEx(
             remoteVideoCanvasWrap,
             connection
@@ -369,10 +365,9 @@ class VideoLoaderImpl constructor(private val rtcEngine: RtcEngineEx) : VideoLoa
         }
 
         fun release() {
+            Log.d(tag, "RemoteVideoCanvasWrap release: $connection")
             lifecycleOwner.lifecycle.removeObserver(this)
             view = null
-            Log.d("hugo", "setupRemoteVideoEx !!!!")
-            rtcEngine.setupRemoteVideoEx(this, connection)
             remoteVideoCanvasList.remove(this)
         }
     }

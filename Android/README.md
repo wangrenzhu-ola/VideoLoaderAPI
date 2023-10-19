@@ -1,17 +1,81 @@
-# VideoLoaderAPI
+# VideoLoaderAPI
 
 VideoLoaderAPI 即秒开秒切场景化api, 该模块旨在帮助视频直播开发者更快集成声网秒切、秒开相关能力的最佳实践.
 
-### 一、文件简介
+### 一、快速开始
+
+这个部分主要介绍如何快速跑通 VideoLoaderAPI Demo
+
+#### 1.环境准备
+
+- 最低兼容 Android 5.0（SDK API Level 21）
+- Android Studio 3.5及以上版本。
+- Android 5.0 及以上的手机设备。
+
+#### 2.运行示例
+
+- <mark>1. </mark> 获取声网App ID -------- [声网Agora - 文档中心 - 如何获取 App ID](https://docs.agora.io/cn/Agora%20Platform/get_appid_token?platform=All%20Platforms#%E8%8E%B7%E5%8F%96-app-id)
+
+   - 点击创建应用
+  
+   ![xxx](image/SamplePicture2.png)
+  
+   - 选择你要创建的应用类型
+  
+   ![xxx](image/SamplePicture3.png)
+  
+   - 得到App ID与App 证书
+  
+   ![xxx](image/SamplePicture4.png)
+  
+   - 秒切机器人服务配置（CloudPlayer）
+  
+   ![xxx](image/SamplePicture6.png)
+
+  获取App 证书 ----- [声网Agora - 文档中心 - 获取 App 证书](https://docs.agora.io/cn/Agora%20Platform/get_appid_token?platform=All%20Platforms#%E8%8E%B7%E5%8F%96-app-%E8%AF%81%E4%B9%A6)
+- <mark>2. </mark> 在项目的[**gradle.properties**](../../gradle.properties)里填写需要的声网 App ID 和 App证书、Cloudplayer 配置  
+  ![xxx](image/SamplePicture1.png)
+
+  ```texag-0-1gpap96h0ag-1-1gpap96h0ag-0-1gpap96h0ag-1-1gpap96h0ag-0-1gpap96h0ag-1-1gpap96h0ag-0-1gpap96h0ag-1-1gpap96h0ag-0-1gpap96h0ag-1-1gpap96h0
+  AGORA_APP_ID：声网appid  
+  AGORA_APP_CERTIFICATE：声网Certificate 
+  CLOUD_PLAYER_KEY：声网RESTful API key
+  CLOUD_PLAYER_SECRET：声网RESTful API secret
+  ```
+
+- <mark>3. </mark> 用 Android Studio 运行项目即可开始您的体验
+
+#### 3.项目介绍
+
+- <mark>1. 概述</mark>
+> VideoLoaderAPI 即秒开秒切场景化api, 该模块旨在帮助视频直播开发者更快集成声网秒切、秒开相关能力的最佳实践.
+>
+- <mark>2. 功能介绍</mark>
+> VideoLoaderAPI Demo 目前已涵盖以下功能
+> - 选择预加载模式和视频出图模式
+>
+>   相关代码请参考：[MainActivity](app/src/main/java/io/agora/videoloaderapi/ui/MainActivity.kt) 
+>
+> - 秒开
+>
+>   相关代码请参考：[RoomListActivity](app/src/main/java/io/agora/videoloaderapi/ui/RoomListActivity.kt) 
+>   
+> - 秒切
+> 
+>   相关代码请参考：[LiveDetailActivity](app/src/main/java/io/agora/videoloaderapi/ui/LiveDetailActivity.kt) 中的 OnPageChangeCallback 的实现。
+
+
+
+### 二、VideoLoaderAPI 使用教程
+
+#### 2.0 文件简介
+
+相关代码请参考：[VideoLoaderAPI](lib_videoloaderapi/src/main/java/io/agora/videoloaderapi/OnLiveRoomItemTouchEventHandler.kt) 
 
 * OnLiveRoomItemTouchEventHandler: 秒开事件处理模块
 * OnRoomListScrollEventHandler: 房间列表滑动事件处理模块
 * OnPageScrollEventHandler: 直播间切换事件处理模块
 * VideoLoader: 内部使用用于处理频道管理的类
-
-
-
-### 二、使用教程
 
 #### 2.1 秒开
 
@@ -210,6 +274,4 @@ VideoLoaderAPI 即秒开秒切场景化api, 该模块旨在帮助视频直播开
   		RtcEngineInstance.generalToken()))
   ))
   ~~~
-
-  
 

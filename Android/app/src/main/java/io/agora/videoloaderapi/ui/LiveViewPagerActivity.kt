@@ -23,12 +23,11 @@ import io.agora.videoloaderapi.rtc.RtcEngineInstance
 import io.agora.videoloaderapi.service.ShowInteractionStatus
 import io.agora.videoloaderapi.service.ShowRoomDetailModel
 import io.agora.videoloaderapi.utils.RunnableWithDenied
-import io.agora.videoloaderapi.utils.TokenGenerator
 import io.agora.videoloaderapi.widget.BaseViewBindingActivity
 
 
-class LiveDetailActivity : BaseViewBindingActivity<ShowLiveDetailActivityBinding>(),
-    LiveDetailFragment.OnMeLinkingListener {
+class LiveViewPagerActivity : BaseViewBindingActivity<ShowLiveDetailActivityBinding>(),
+    LiveViewPagerFragment.OnMeLinkingListener {
     private val tag = "LiveDetailActivity"
 
     companion object {
@@ -43,7 +42,7 @@ class LiveDetailActivity : BaseViewBindingActivity<ShowLiveDetailActivityBinding
             selectedIndex: Int,
             scrollable: Boolean
         ) {
-            context.startActivity(Intent(context, LiveDetailActivity::class.java).apply {
+            context.startActivity(Intent(context, LiveViewPagerActivity::class.java).apply {
                 putExtra(EXTRA_ROOM_DETAIL_INFO_LIST, roomDetail)
                 putExtra(EXTRA_ROOM_DETAIL_INFO_LIST_SELECTED_INDEX, selectedIndex)
                 putExtra(EXTRA_ROOM_DETAIL_INFO_LIST_SCROLLABLE, scrollable)
@@ -64,7 +63,7 @@ class LiveDetailActivity : BaseViewBindingActivity<ShowLiveDetailActivityBinding
     }
 
     private val POSITION_NONE = -1
-    private val vpFragments = SparseArray<LiveDetailFragment>()
+    private val vpFragments = SparseArray<LiveViewPagerFragment>()
     private var currLoadPosition = POSITION_NONE
 
     private var onPageScrollEventHandler: OnPageScrollEventHandler? = null
@@ -110,7 +109,7 @@ class LiveDetailActivity : BaseViewBindingActivity<ShowLiveDetailActivityBinding
         val selectedRoomIndex = intent.getIntExtra(EXTRA_ROOM_DETAIL_INFO_LIST_SELECTED_INDEX, 0)
 
         val needPreJoin = AgoraApplication.the()?.needPreJoin == true
-        onPageScrollEventHandler = object : OnPageScrollEventHandler(this, RtcEngineInstance.rtcEngine, RtcEngineInstance.localUid(), needPreJoin,
+        onPageScrollEventHandler = object : OnPageScrollEventHandler(RtcEngineInstance.rtcEngine, RtcEngineInstance.localUid(), needPreJoin,
             AgoraApplication.the()?.sliceMode!!
         ) {
             override fun onPageScrollStateChanged(state: Int) {
@@ -160,7 +159,7 @@ class LiveDetailActivity : BaseViewBindingActivity<ShowLiveDetailActivityBinding
             if (it.interactStatus == ShowInteractionStatus.pking.value) {
                 anchorList.add(VideoLoader.AnchorInfo(
                     it.interactRoomName,
-                    it.ownerId.toInt(),
+                    it.interactOwnerId.toInt(),
                     RtcEngineInstance.generalToken()
                 ))
             }
@@ -181,7 +180,7 @@ class LiveDetailActivity : BaseViewBindingActivity<ShowLiveDetailActivityBinding
                 } else {
                     mRoomInfoList[selectedRoomIndex]
                 }
-                return LiveDetailFragment.newInstance(
+                return LiveViewPagerFragment.newInstance(
                     roomInfo,
                     onPageScrollEventHandler as OnPageScrollEventHandler, position
                 ).apply {
@@ -197,7 +196,7 @@ class LiveDetailActivity : BaseViewBindingActivity<ShowLiveDetailActivityBinding
                     if (roomInfo.interactStatus == ShowInteractionStatus.pking.value) {
                         anchorList.add(VideoLoader.AnchorInfo(
                             roomInfo.interactRoomName,
-                            roomInfo.ownerId.toInt(),
+                            roomInfo.interactOwnerId.toInt(),
                             RtcEngineInstance.generalToken()
                         ))
                     }
@@ -230,7 +229,6 @@ class LiveDetailActivity : BaseViewBindingActivity<ShowLiveDetailActivityBinding
             vpFragments[onPageScrollEventHandler!!.getCurrentRoomPosition()]?.stopLoadPage(false)
         }
 
-        TokenGenerator.expireSecond = -1
         RtcEngineInstance.cleanCache()
         super.finish()
     }

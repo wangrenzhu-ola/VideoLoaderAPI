@@ -7,7 +7,6 @@ import android.view.*
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
-import io.agora.videoloaderapi.AnchorState
 import io.agora.videoloaderapi.OnPageScrollEventHandler
 import io.agora.videoloaderapi.R
 import io.agora.videoloaderapi.VideoLoader
@@ -16,14 +15,14 @@ import io.agora.videoloaderapi.rtc.RtcEngineInstance
 import io.agora.videoloaderapi.service.ShowInteractionStatus
 import io.agora.videoloaderapi.service.ShowRoomDetailModel
 
-class LiveDetailFragment : Fragment() {
+class LiveViewPagerFragment : Fragment() {
     private val TAG = this.toString()
 
     companion object {
 
         private const val EXTRA_ROOM_DETAIL_INFO = "roomDetailInfo"
 
-        fun newInstance(roomDetail: ShowRoomDetailModel, handler: OnPageScrollEventHandler, position: Int) = LiveDetailFragment().apply {
+        fun newInstance(roomDetail: ShowRoomDetailModel, handler: OnPageScrollEventHandler, position: Int) = LiveViewPagerFragment().apply {
             arguments = Bundle().apply {
                 putParcelable(EXTRA_ROOM_DETAIL_INFO, roomDetail)
             }
@@ -39,7 +38,6 @@ class LiveDetailFragment : Fragment() {
         ShowLiveDetailFragmentBinding.inflate(LayoutInflater.from(requireContext())
         )
     }
-    private val isRoomOwner by lazy { mRoomInfo.ownerId == RtcEngineInstance.localUid().toString() }
 
     private val mRtcEngine by lazy { RtcEngineInstance.rtcEngine }
     private val mRtcVideoSwitcher by lazy { VideoLoader.getImplInstance(mRtcEngine) }
@@ -65,7 +63,7 @@ class LiveDetailFragment : Fragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         Log.d(TAG, "Fragment Lifecycle: onAttach")
-        onMeLinkingListener = (activity as? LiveDetailActivity)
+        onMeLinkingListener = (activity as? LiveViewPagerActivity)
         if (isPageLoaded) {
             startLoadPage()
         }
@@ -82,7 +80,6 @@ class LiveDetailFragment : Fragment() {
 
     fun onPageLoaded() {
         // TODO 页面加载完成
-        //updatePKingMode()
     }
 
     private fun startLoadPage(){
@@ -93,14 +90,11 @@ class LiveDetailFragment : Fragment() {
     fun stopLoadPage(isScrolling: Boolean){
         Log.d(TAG, "Fragment PageLoad stop load, roomId=${mRoomInfo.roomId}")
         isPageLoaded = false
-        destroy(isScrolling) // 切页或activity销毁
-    }
-
-    private fun destroy(isScrolling: Boolean): Boolean {
         mBinding.root.postDelayed({
             mBinding.videoLinkingLayout.videoContainer.removeAllViews()
+            mBinding.videoPKLayout.iBroadcasterAView.removeAllViews()
+            mBinding.videoPKLayout.iBroadcasterBView.removeAllViews()
         }, 200)
-        return destroyRtcEngine(isScrolling)
     }
 
     private fun onBackPressed() {
@@ -115,9 +109,7 @@ class LiveDetailFragment : Fragment() {
             initVideoView()
         }
         initTopLayout()
-        if (mRoomInfo.interactStatus == ShowInteractionStatus.pking.value) {
-            refreshViewDetailLayout(2)
-        }
+        refreshViewDetailLayout(mRoomInfo.interactStatus)
     }
 
     private fun initTopLayout() {
@@ -142,7 +134,7 @@ class LiveDetailFragment : Fragment() {
                     ),
                     RtcEngineInstance.localUid(),
                     VideoLoader.VideoCanvasContainer(
-                        it,
+                        viewLifecycleOwner,
                         mBinding.videoPKLayout.iBroadcasterAView,
                         mRoomInfo.ownerId.toInt()
                     )
@@ -150,14 +142,14 @@ class LiveDetailFragment : Fragment() {
                 mRtcVideoSwitcher.renderVideo(
                     VideoLoader.AnchorInfo(
                         mRoomInfo.interactRoomName,
-                        mRoomInfo.ownerId.toInt(),
+                        mRoomInfo.interactOwnerId.toInt(),
                         RtcEngineInstance.generalToken()
                     ),
                     RtcEngineInstance.localUid(),
                     VideoLoader.VideoCanvasContainer(
-                        it,
+                        viewLifecycleOwner,
                         mBinding.videoPKLayout.iBroadcasterBView,
-                        mRoomInfo.ownerId.toInt()
+                        mRoomInfo.interactOwnerId.toInt()
                     )
                 )
             } else {
@@ -169,7 +161,7 @@ class LiveDetailFragment : Fragment() {
                     ),
                     RtcEngineInstance.localUid(),
                     VideoLoader.VideoCanvasContainer(
-                        it,
+                        viewLifecycleOwner,
                         mBinding.videoLinkingLayout.videoContainer,
                         mRoomInfo.ownerId.toInt()
                     )
@@ -199,20 +191,20 @@ class LiveDetailFragment : Fragment() {
             if ((mRoomInfo.interactStatus == ShowInteractionStatus.pking.value)) {
                 if (info.channelId == mRoomInfo.roomId) {
                     return VideoLoader.VideoCanvasContainer(
-                        it,
+                        viewLifecycleOwner,
                         mBinding.videoPKLayout.iBroadcasterAView,
                         mRoomInfo.ownerId.toInt()
                     )
                 } else if (info.channelId == mRoomInfo.interactRoomName) {
                     return VideoLoader.VideoCanvasContainer(
-                        it,
+                        viewLifecycleOwner,
                         mBinding.videoPKLayout.iBroadcasterBView,
-                        mRoomInfo.ownerId.toInt()
+                        mRoomInfo.interactOwnerId.toInt()
                     )
                 }
             } else {
                 return VideoLoader.VideoCanvasContainer(
-                    it,
+                    viewLifecycleOwner,
                     mBinding.videoLinkingLayout.videoContainer,
                     mRoomInfo.ownerId.toInt()
                 )
@@ -222,17 +214,6 @@ class LiveDetailFragment : Fragment() {
     }
 
     //================== RTC Operation ===================
-    private fun destroyRtcEngine(isScrolling: Boolean): Boolean {
-        if (!isRoomOwner) return true;
-        mRtcEngine.stopPreview()
-        mRtcVideoSwitcher.switchAnchorState(if (isScrolling) AnchorState.PRE_JOINED else AnchorState.IDLE,
-            VideoLoader.AnchorInfo(
-                mRoomInfo.roomId,
-                mRoomInfo.ownerId.toInt(),
-                RtcEngineInstance.generalToken()
-            ), RtcEngineInstance.localUid(), context)
-        return true
-    }
 
     private var onMeLinkingListener: OnMeLinkingListener? = null
 

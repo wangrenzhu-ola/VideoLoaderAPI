@@ -9,18 +9,9 @@ enum class ShowRoomStatus(val value: Int) {
     end(1)//直播结束
 }
 
-enum class ShowRoomRequestStatus(val value: Int){
-    idle(0),
-    waitting(1),// 等待中
-    accepted(2),//  已接受
-    rejected(3),// 已拒绝
-    ended(4)// 已结束
-}
-
 enum class ShowInteractionStatus(val value: Int) {
     idle(0), /// 空闲
-    onSeat(1), /// 连麦中
-    pking(2) /// pk中
+    pking(1) /// pk中
 }
 
 // 房间详情信息
@@ -32,9 +23,10 @@ data class ShowRoomDetailModel constructor(
     val ownerId: String,
     val ownerAvatar: String,// http url
     val ownerName: String,
-    val roomStatus: Int = ShowRoomStatus.activity.value,
+    var roomStatus: Int = ShowRoomStatus.activity.value,
     val interactStatus: Int = ShowInteractionStatus.idle.value,
     val interactRoomName: String,
+    val interactOwnerId: String,
     val createdAt: Double,
     val updatedAt: Double
 ) : Parcelable {
@@ -50,30 +42,13 @@ data class ShowRoomDetailModel constructor(
         parcel.readInt(),
         parcel.readInt(),
         parcel.readString()?:"",
+        parcel.readString()?:"",
         parcel.readDouble(),
         parcel.readDouble()
     ) {
     }
 
-    fun toMap(): HashMap<String, Any>{
-        return hashMapOf(
-            Pair("roomId", roomId),
-            Pair("roomName", roomName),
-            Pair("roomUserCount", roomUserCount),
-            Pair("thumbnailId", thumbnailId),
-            Pair("ownerId", ownerId),
-            Pair("ownerAvatar", ownerAvatar),
-            Pair("ownerName", ownerName),
-            Pair("roomStatus", roomStatus),
-            Pair("interactStatus", interactStatus),
-            Pair("createdAt", createdAt),
-            Pair("updatedAt", updatedAt),
-        )
-    }
-
-    fun getThumbnailIcon() = R.mipmap.show_room_cover_3
-
-    fun isRobotRoom() = roomId.length > 6
+    fun getThumbnailIcon() = R.mipmap.show_room_cover
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(roomId)
@@ -86,6 +61,7 @@ data class ShowRoomDetailModel constructor(
         parcel.writeInt(roomStatus)
         parcel.writeInt(interactStatus)
         parcel.writeString(interactRoomName)
+        parcel.writeString(interactOwnerId)
         parcel.writeDouble(createdAt)
         parcel.writeDouble(updatedAt)
     }

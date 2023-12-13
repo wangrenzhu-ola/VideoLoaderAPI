@@ -8,7 +8,10 @@
 import AgoraRtcKit
 import VideoLoaderAPI
 
+private let kRoomCount: Int = 10
+
 class RoomCollectionListViewController: UIViewController {
+    private var token: String = ""
     private var roomList: [RoomListModel] = [] {
         didSet {
             delegateHandler.roomList = AGRoomArray(roomList: roomList)
@@ -88,35 +91,49 @@ class RoomCollectionListViewController: UIViewController {
         NetworkManager.shared.generateToken(channelName: "",
                                             uid: "\(kCurrentUid)",
                                             tokenType: .token007,
-                                            type: .rtc) { token in
+                                            type: .rtc) {[weak self] token in
+            guard let self = self else {return}
             guard let token = token else {
                 self._loadToken()
                 return
             }
-            var list: [RoomListModel] = []
-            for i in 0...12 {
-                let room = RoomListModel()
-                let anchor = AnchorInfo()
-                anchor.uid = kRobotUid
-                anchor.channelName = "\(ShowRobotService.robotRoomId(i))"
-                anchor.token = token
-                room.anchorInfoList = [anchor]
-                let pkChannelIdx = Int(arc4random_uniform(24))
-                if pkChannelIdx < 12 {
-                    let channelName = "\(ShowRobotService.robotRoomId(pkChannelIdx))"
-                    if channelName == anchor.channelName {
-                        continue
-                    }
-                    let pkAnchor = AnchorInfo()
-                    pkAnchor.uid = kRobotUid
-                    pkAnchor.channelName = channelName
-                    pkAnchor.token = token
-                    room.anchorInfoList.append(pkAnchor)
-                }
-                list.append(room)
-            }
-            self.roomList = list
+            self.token = token
+            self.roomList = self.getMoreRoomList()
         }
+    }
+    
+    private func updateRoomPkList(roomInfo: RoomListModel) {
+        guard settingInfoList[DebugIndexType.pkEnable.rawValue].selectedValue() == 1 else { return }
+        let ownerAnchorInfo = roomInfo.anchorInfoList.first!
+        roomInfo.anchorInfoList = [ownerAnchorInfo]
+        let pkChannelIdx = Int(arc4random_uniform(UInt32(roomList.count + 4)))
+        if pkChannelIdx < kRoomCount {
+            let channelName = "\(ShowRobotService.robotRoomId(pkChannelIdx))"
+            if channelName == roomInfo.channelName() {
+                return
+            }
+            let pkAnchor = AnchorInfo()
+            pkAnchor.uid = kRobotUid
+            pkAnchor.channelName = channelName
+            pkAnchor.token = self.token
+            roomInfo.anchorInfoList.append(pkAnchor)
+        }
+    }
+    
+    private func getMoreRoomList() -> [RoomListModel] {
+        var list: [RoomListModel] = []
+        for i in 0...kRoomCount-1 {
+            let room = RoomListModel()
+            let anchor = AnchorInfo()
+            anchor.uid = kRobotUid
+            anchor.channelName = "\(ShowRobotService.robotRoomId(i))"
+            anchor.token = token
+            room.anchorInfoList = [anchor]
+            list.append(room)
+            self.updateRoomPkList(roomInfo: room)
+        }
+        
+        return list
     }
     
     @objc func onSettingAction() {
@@ -141,6 +158,31 @@ extension RoomCollectionListViewController: UICollectionViewDataSource {
         } completion: { [weak self] in
             guard let self = self else {return}
             let vc = RoomCollectionViewController()
+            vc.randomPKClosure = {[weak self] roomInfo in
+                guard let self = self else {return}
+                var origPKAnchorId: String = ""
+                if roomInfo.anchorInfoList.count == 2 {
+                    origPKAnchorId = roomInfo.anchorInfoList.last?.channelName ?? ""
+                }
+                self.updateRoomPkList(roomInfo: roomInfo)
+                while true {
+                    var newPkAnchorId: String = ""
+                    if roomInfo.anchorInfoList.count == 2 {
+                        newPkAnchorId = roomInfo.anchorInfoList.last?.channelName ?? ""
+                    }
+                    if newPkAnchorId == origPKAnchorId {
+                        self.updateRoomPkList(roomInfo: roomInfo)
+                    } else {
+                        break
+                    }
+                }
+            }
+            vc.loadMoreClosure = { [weak self] in
+                guard let self = self else {return []}
+                let roomList = self.getMoreRoomList()
+                self.roomList = self.roomList + roomList
+                return roomList
+            }
             vc.roomList = self.roomList
             vc.focusIndex = indexPath.row
             self.navigationController?.pushViewController(vc, animated: true)

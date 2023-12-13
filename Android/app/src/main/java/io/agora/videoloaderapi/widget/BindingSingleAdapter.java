@@ -102,7 +102,7 @@ public abstract class BindingSingleAdapter<Data, Binding extends ViewBinding> ex
     }
 
     @Override
-    public final int getItemCount() {
+    public int getItemCount() {
         return mDataList.size();
     }
 

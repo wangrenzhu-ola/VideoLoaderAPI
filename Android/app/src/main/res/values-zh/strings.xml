@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">秒开秒切场景化API Demo</string>
+    <string name="show_room_id">ID: %s</string>
+    <string name="show_welcome">欢迎体验秒开秒切场景化API Demo!</string>
+    <string name="show_enter_demo">进入房间列表</string>
+    <string name="show_prejoin_mode">开启PreJoin模式</string>
+    <string name="show_slicing_mode">房间滑动出图模式</string>
+    <string name="show_ui_mode">房间滑动使用的UI模块</string>
+    <string name="show_settings">设置</string>
+    <string name="show_pk">连线互动</string>
+    <string name="show_slicing_type_visible">开始滑动立即出图</string>
+    <string name="show_slicing_type_end">结束滑动出图</string>
+    <string name="show_ui_type_view_pager">ViewPager</string>
+    <string name="show_ui_recycle_view">RecycleView</string>
+</resources>

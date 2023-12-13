@@ -103,7 +103,7 @@ class NetworkManager:NSObject {
                                      "src": "iOS",
                                      "traceId": UUID().uuidString]
                       
-        NetworkManager.shared.postRequest(urlString: "\(baseServerUrl)v1/cloud-player/start",
+        NetworkManager.shared.postRequest(urlString: "\(baseServerUrl)v1/rte-cloud-player/start",
                                           params: params,
                                           success: { response in
             let code = response["code"] as? Int
@@ -217,7 +217,6 @@ class NetworkManager:NSObject {
             request.httpBody = try? JSONSerialization.data(withJSONObject: params ?? [],
                                                            options: .sortedKeys) // convertParams(params: params).data(using: .utf8)
         }
-        let kk = String.init(data: request.httpBody!, encoding: .utf8)
         let curl = request.cURL(pretty: true)
         #if DEBUG
         debugPrint("curl == \(curl)")

@@ -2,25 +2,15 @@ package io.agora.videoloaderapi
 
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.util.SparseArray
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import io.agora.rtc2.*
 import io.agora.rtc2.internal.Logging
 import java.util.*
 import kotlin.collections.ArrayList
-
-/**
- * 直播间出图模式
- * @param VISIBLE 立即出图
- * @param END_DRAG 松手出图
- * @param END_SCROLL 停下出图
- */
-enum class AGSlicingType(val value :Int) {
-    VISIBLE(0),  //立即出图
-    END_DRAG(1),  //松手出图
-    END_SCROLL(2),  //停下出图
-    NEVER(3)
-}
 
 /**
  * 直播间 item 触摸事件
@@ -29,13 +19,14 @@ enum class AGSlicingType(val value :Int) {
  * @param needPreJoin 房间是否需要 preJoin
  * @param videoScrollMode 视频出图模式
  */
-abstract class OnPageScrollEventHandler constructor(
+abstract class OnPageScrollEventHandler2 constructor(
+    private val layoutManager: LinearLayoutManager,
     private val mRtcEngine: RtcEngineEx,
     private val localUid: Int,
     private val needPreJoin: Boolean,
     private val videoScrollMode: AGSlicingType
-) : ViewPager2.OnPageChangeCallback() {
-    private val tag = "OnPageScrollHandler"
+) : RecyclerView.OnScrollListener() {
+    private val tag = "OnPageScrollHandler2"
     private val videoSwitcher by lazy { VideoLoader.getImplInstance(mRtcEngine) }
     private val roomList = SparseArray<VideoLoader.RoomInfo>()
 
@@ -48,28 +39,31 @@ abstract class OnPageScrollEventHandler constructor(
     // ViewPager2.OnPageChangeCallback()
     private val POSITION_NONE = -1
     private var currLoadPosition = POSITION_NONE
-    private val PRE_LOAD_OFFSET = 0.01f
     private var preLoadPosition = POSITION_NONE
-    private var lastOffset = 0f
-    private var scrollStatus: Int = ViewPager2.SCROLL_STATE_IDLE
+    private var lastVisibleItemCount = 0
 
     private val roomsForPreloading = Collections.synchronizedList(mutableListOf<VideoLoader.RoomInfo>())
     private val roomsJoined = Collections.synchronizedList(mutableListOf<VideoLoader.RoomInfo>())
 
     private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
-    fun onRoomCreated(position: Int, info: VideoLoader.RoomInfo, isCurrentItem: Boolean) {
+    private var isFirst = true
+
+    fun onRoomCreated(position: Int, info: VideoLoader.RoomInfo) {
         roomList.put(position, info)
-        if (isCurrentItem) {
-            joinChannel(position, info, localUid, true)
+        if (isFirst) {
+            isFirst = false
             info.anchorList.forEach {
                 mRtcEngine.adjustUserPlaybackSignalVolumeEx(it.anchorUid, 100, RtcConnection(it.channelId, localUid))
             }
             mainHandler.postDelayed({
                 roomsJoined.add(info)
+                pageLoaded(position, info)
                 preJoinChannels()
+                preLoadPosition = POSITION_NONE
+                currLoadPosition = layoutManager.findFirstVisibleItemPosition()
+                lastVisibleItemCount = layoutManager.childCount
             }, 200)
-            onPageStartLoading(position)
         }
     }
 
@@ -108,96 +102,57 @@ abstract class OnPageScrollEventHandler constructor(
         return currLoadPosition
     }
 
-    // ViewPager2
-    override fun onPageScrollStateChanged(state: Int) {
-        super.onPageScrollStateChanged(state)
-        //Log.d(tag, "PageChange onPageScrollStateChanged state=$state")
-        when (state) {
-            ViewPager2.SCROLL_STATE_IDLE -> {
-                if(preLoadPosition != POSITION_NONE){
-                    // TODO preLoadPosition 页面消失
-                    hideChannel(roomList[preLoadPosition] ?: return)
-                    onPageLeft(preLoadPosition)
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+        super.onScrollStateChanged(recyclerView, newState)
+
+        if (newState == RecyclerView.SCROLL_STATE_IDLE) { // 滚动停止时
+            val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+            val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
+            val visibleItemCount = layoutManager.childCount
+
+            // 检查哪些item离开了视图
+            for (i in currLoadPosition until currLoadPosition + lastVisibleItemCount) {
+                if (i < firstVisibleItemPosition || i >= firstVisibleItemPosition + visibleItemCount) {
+                    hideChannel(roomList[i] ?: return)
+                    onPageLeft(i)
                 }
-                // TODO currLoadPosition 页面显示完成
-                startAudio(roomList[currLoadPosition] ?: return)
-                roomsJoined.add(roomList[currLoadPosition] ?: return)
+            }
+
+            // 当前停留的页面
+            if (currLoadPosition != firstVisibleItemPosition) {
+                startAudio(roomList[firstVisibleItemPosition] ?: return)
+                roomsJoined.add(roomList[firstVisibleItemPosition] ?: return)
                 preJoinChannels()
-                pageLoaded(currLoadPosition, roomList[currLoadPosition])
-                preLoadPosition = POSITION_NONE
-                lastOffset = 0f
+                pageLoaded(firstVisibleItemPosition, roomList[firstVisibleItemPosition])
             }
-            ViewPager2.SCROLL_STATE_SETTLING -> {
-                // 松手事件
-            }
-            ViewPager2.SCROLL_STATE_DRAGGING -> {
 
-            }
-        }
-        scrollStatus = state
-    }
-
-    override fun onPageScrolled(
-        position: Int,
-        positionOffset: Float,
-        positionOffsetPixels: Int
-    ) {
-        super.onPageScrolled(position, positionOffset, positionOffsetPixels)
-        //Log.d(tag, "PageChange onPageScrolled positionOffset=$positionOffset")
-        if (scrollStatus == ViewPager2.SCROLL_STATE_DRAGGING) {
-            if (lastOffset > 0f) {
-                val isMoveUp = (positionOffset - lastOffset) > 0
-                if (isMoveUp && positionOffset >= PRE_LOAD_OFFSET && preLoadPosition == POSITION_NONE) {
-                    preLoadPosition = currLoadPosition + 1
-                    // TODO preLoadPosition 页面开始显示
-                    joinChannel(preLoadPosition, roomList[preLoadPosition] ?: return, localUid, false)
-                    onPageStartLoading(preLoadPosition)
-                } else if (!isMoveUp && positionOffset <= (1 - PRE_LOAD_OFFSET) && preLoadPosition == POSITION_NONE) {
-                    preLoadPosition = currLoadPosition - 1
-                    // TODO preLoadPosition 页面开始显示
-                    joinChannel(preLoadPosition, roomList[preLoadPosition] ?: return, localUid, false)
-                    onPageStartLoading(preLoadPosition)
-                }
-            }
-            lastOffset = positionOffset
+            currLoadPosition = firstVisibleItemPosition
+            lastVisibleItemCount = visibleItemCount
+            preLoadPosition = POSITION_NONE
         }
     }
 
-    override fun onPageSelected(position: Int) {
-        super.onPageSelected(position)
-        //Log.d(tag, "PageChange onPageSelected position=$position, currLoadPosition=$currLoadPosition, preLoadPosition=$preLoadPosition")
+    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+        super.onScrolled(recyclerView, dx, dy)
 
-        if (currLoadPosition != POSITION_NONE) {
-            if (preLoadPosition != POSITION_NONE) {
-                if (position == preLoadPosition) {
-                    // TODO currLoadPosition 页面消失
-                    hideChannel(roomList[currLoadPosition] ?: return)
-                    onPageLeft(currLoadPosition)
-                } else {
-                    // TODO preLoadPosition 页面消失
-                    hideChannel(roomList[preLoadPosition] ?: return)
-                    onPageLeft(preLoadPosition)
-
-                    // TODO currLoadPosition 页面显示完成
-                    roomsJoined.add(roomList[currLoadPosition] ?: return)
-                    preJoinChannels()
-                    startAudio(roomList[currLoadPosition] ?: return)
-                    pageLoaded(currLoadPosition, roomList[currLoadPosition])
-                }
-            }
-
-            if (currLoadPosition != position) {
-                // TODO currLoadPosition 页面消失
-                hideChannel(roomList[currLoadPosition] ?: return)
-                onPageLeft(currLoadPosition)
-
-                joinChannel(position, roomList[position] ?: return, localUid, false)
-                onPageStartLoading(position)
-            }
+        val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+        // 检查新的页面是否开始出现
+        val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
+        val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
+        //Log.d("hugo", "onScrolled, currLoadPosition：currLoadPosition firstVisibleItemPosition: $firstVisibleItemPosition, lastVisibleItemPosition: $lastVisibleItemPosition")
+        // 和上次第一个可见的item不同，认为是新的页面开始加载
+        if (firstVisibleItemPosition != currLoadPosition && preLoadPosition != firstVisibleItemPosition) {
+            // 下滑
+            preLoadPosition = firstVisibleItemPosition
+        } else if (lastVisibleItemPosition != currLoadPosition && preLoadPosition != lastVisibleItemPosition) {
+            // 上滑
+            preLoadPosition = lastVisibleItemPosition
+        } else {
+            return
         }
-        currLoadPosition = position
-        preLoadPosition = POSITION_NONE
-        lastOffset = 0f
+
+        joinChannel(preLoadPosition, roomList[preLoadPosition] ?: return, localUid, false)
+        onPageStartLoading(preLoadPosition)
     }
 
     // OnPageStateEventHandler
@@ -237,6 +192,8 @@ abstract class OnPageScrollEventHandler constructor(
         roomInfo.anchorList.forEach {
             if (needPreJoin && currentRoom.anchorList.none { joined -> joined.channelId == it.channelId }) {
                 videoSwitcher.switchAnchorState(AnchorState.PRE_JOINED, it, localUid)
+            } else if (currentRoom.anchorList.none { joined -> joined.channelId == it.channelId }) {
+                videoSwitcher.switchAnchorState(AnchorState.IDLE, it, localUid)
             }
         }
     }

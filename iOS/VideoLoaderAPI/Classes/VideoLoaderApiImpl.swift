@@ -13,7 +13,7 @@ public class VideoLoaderApiImpl: NSObject {
     public var printClosure: ((String)->())?
     public var warningClosure: ((String)->())?
     public var errorClosure: ((String)->())?
-    private(set) var config: VideoLoaderConfig?
+    private var config: VideoLoaderConfig?
     
     private let apiProxy = VideoLoaderApiProxy()
     private var profilerMap: [String: VideoLoaderProfiler] = [:]
@@ -88,7 +88,7 @@ extension VideoLoaderApiImpl {
             return
         }
         
-        if let connection = exConnectionMap[channelId] {
+        if let _ = exConnectionMap[channelId] {
             return
         }
         
@@ -246,7 +246,7 @@ extension VideoLoaderApiImpl: IVideoLoaderApi {
             mediaOptions.autoSubscribeVideo = false
         }
 
-        debugLoaderPrint("tagId[\(tagId)] switchAnchorState[\(anchorInfo.channelName)] want:\(newState.rawValue) real: \(realState.rawValue)")
+        debugLoaderPrint("tagId[\(tagId)] switchAnchorState[\(anchorInfo.channelName)] want:\(newState.rawValue) real:\(realState.rawValue) old:\(oldState.rawValue)")
 //        debugLoaderPrint("tagId[\(tagId)] switchAnchorState[\(anchorInfo.channelName)] autoSubscribeAudio:\(mediaOptions.autoSubscribeAudio) autoSubscribeVideo: \(mediaOptions.autoSubscribeVideo)")
         _updateChannelEx(channelId:anchorInfo.channelName, options: mediaOptions)
         
@@ -302,7 +302,7 @@ extension VideoLoaderApiImpl: IVideoLoaderApi {
         videoCanvas.renderMode = .hidden
         videoCanvas.setupMode = container.setupMode
         let ret = engine.setupRemoteVideoEx(videoCanvas, connection: connection)
-        debugLoaderPrint("renderVideo[\(connection.channelId)] ret = \(ret), uid:\(anchorInfo.uid) view: \(container.container)")
+        debugLoaderPrint("renderVideo[\(connection.channelId)] ret = \(ret), uid:\(anchorInfo.uid)")
         //查找缓存这个view是不是被其他connection用了，如果有则remove
         let ptrString = String(format: "%p", videoCanvas.view ?? 0)
         if container.setupMode == .add {
@@ -316,7 +316,7 @@ extension VideoLoaderApiImpl: IVideoLoaderApi {
                 videoCanvas.view = container.container
                 videoCanvas.renderMode = .hidden
                 videoCanvas.setupMode = .remove
-                let ret = engine.setupRemoteVideoEx(videoCanvas, connection: connection)
+                let _ = engine.setupRemoteVideoEx(videoCanvas, connection: connection)
             }
         } else if container.setupMode == .remove {
             renderViewMap[ptrString] = nil
@@ -362,10 +362,19 @@ extension VideoLoaderApiImpl: IVideoLoaderApi {
     }
 }
 
-
 extension VideoLoaderApiImpl {
     func startMediaRenderingTracing(anchorId: String) {
         guard let engine = config?.rtcEngine, let connection = exConnectionMap[anchorId] else {return}
         engine.startMediaRenderingTracingEx(connection)
+    }
+    
+    func getUsedAnchorIds(tagId: String) -> [String] {
+        var anchorIds: [String] = []
+        //find anchor id list
+        exConnectionDeps.forEach { key, value in
+            if value[tagId] == nil { return }
+            anchorIds.append(key)
+        }
+        return anchorIds
     }
 }

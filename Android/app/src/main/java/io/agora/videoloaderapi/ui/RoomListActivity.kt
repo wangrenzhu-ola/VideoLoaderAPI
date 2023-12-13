@@ -8,10 +8,7 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
-import io.agora.videoloaderapi.OnLiveRoomItemTouchEventHandler
-import io.agora.videoloaderapi.OnRoomListScrollEventHandler
-import io.agora.videoloaderapi.R
-import io.agora.videoloaderapi.VideoLoader
+import io.agora.videoloaderapi.*
 import io.agora.videoloaderapi.databinding.ShowRoomItemBinding
 import io.agora.videoloaderapi.databinding.ShowRoomListActivityBinding
 import io.agora.videoloaderapi.rtc.RtcEngineInstance
@@ -132,7 +129,6 @@ class RoomListActivity : AppCompatActivity() {
         binding.ivCover.setImageResource(roomInfo.getThumbnailIcon())
 
         val onTouchEventHandler = object : OnLiveRoomItemTouchEventHandler(
-            this,
             mRtcEngine,
             VideoLoader.RoomInfo(
                 roomInfo.roomId,
@@ -188,12 +184,25 @@ class RoomListActivity : AppCompatActivity() {
 
     private fun goLiveDetailActivity(list: List<ShowRoomDetailModel>, position: Int, roomInfo: ShowRoomDetailModel) {
         // 进房前设置一些必要的设置
-        LiveDetailActivity.launch(
-            this,
-            ArrayList(list),
-            position,
-            roomInfo.ownerId != RtcEngineInstance.localUid().toString()
-        )
+        when (AgoraApplication.the()?.uiMode) {
+            AGUIType.ViewPager -> {
+                LiveViewPagerActivity.launch(
+                    this,
+                    ArrayList(list),
+                    position,
+                    roomInfo.ownerId != RtcEngineInstance.localUid().toString()
+                )
+            }
+            AGUIType.RecycleView -> {
+                LiveRecycleViewActivity.launch(
+                    this,
+                    ArrayList(list),
+                    position,
+                    roomInfo.ownerId != RtcEngineInstance.localUid().toString()
+                )
+            }
+            else -> {}
+        }
     }
 
     override fun onDestroy() {

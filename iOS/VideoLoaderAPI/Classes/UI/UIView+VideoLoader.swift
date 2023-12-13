@@ -106,6 +106,7 @@ extension UIView {
                                                             tagId: roomInfo.channelName())
             }
         case .cancelled, .ended:
+            if ag_tapRoomId.isEmpty {return}
             ag_tapRoomId = ""
             let point = ges.location(in: self)
             let currentTl = convert(CGPoint.zero, to:api_getWinwdow())

@@ -20,7 +20,8 @@
 ---
 
 ### 集成遇到困难，联系声网获取协助
-请加入微信群
- ![](https://download.agora.io/demo/release/SDHY_QA.jpg)
+> 请加入微信群
+> 
+> ![](https://download.agora.io/demo/release/SDHY_QA.jpg)
 
 ---

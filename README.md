@@ -19,7 +19,8 @@ Quick Switch/Quick Join API is a scenario-based API solution designed by Agora f
 ---
 
 ### Difficulties in integration? Contact Agora for assistance
-Join our WeChat group.
- ![](https://download.agora.io/demo/release/SDHY_QA.jpg)
+> Join our WeChat group.
+> 
+> ![](https://download.agora.io/demo/release/SDHY_QA.jpg)
 
 ---

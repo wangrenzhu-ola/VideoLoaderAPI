@@ -1,3 +1,4 @@
+*[English](CHANGELOG.md) | 中文*
 
 ## [0.1.3](https://github.com/AgoraIO-Community/VideoLoaderAPI/releases/tag/0.1.3)
 - [iOS]修复重置roomList后当前房间因为pk对象变化导致的无法移除多余的频道

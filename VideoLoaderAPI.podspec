@@ -35,7 +35,7 @@ TODO: Add long description of the pod here.
   s.static_framework = true
   s.swift_version = '5.0'
 
-  s.source_files = 'VideoLoaderAPI/Classes/**/*'
+  s.source_files = 'iOS/VideoLoaderAPI/Classes/**/*'
   
   # s.resource_bundles = {
   #   'VideoLoaderAPI' => ['VideoLoaderAPI/Assets/*.png']
